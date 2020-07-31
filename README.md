@@ -17,4 +17,4 @@ Install via `pip` the following packages: `pyirsdk`, `pyinstaller`, `pywin32`, `
 
 Compile with:
 
-`pyinstaller --onefile --hidden-import pystray._win32 --hidden-import win32api --hidden-import -w pywintypes main.py`
+`pyinstaller --onefile --hidden-import pystray._win32 --hidden-import win32api --hidden-import pywintypes -w main.py`
