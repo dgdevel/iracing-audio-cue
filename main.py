@@ -83,27 +83,34 @@ def fastclassbehind_handler(ir, config, state):
 	current_time = time.time()
 	if state.lastplay + warn_repeat_after > current_time:
 		return
+	current_caridx = ir['CamCarIdx']
+	if ir['IsReplayPlaying'] or ir['CarIdxTrackSurface'][current_caridx] == irsdk.TrkLoc.on_track:
+		return
 	average_lap_duration = ir['DriverInfo']['DriverCarEstLapTime']
 	warn_threshold = float(config['warn_threshold'])
 	warn_threshold_min = float(config['warn_threshold_min'])
 	pct_delta = warn_threshold * 100.0 / average_lap_duration
 	pct_delta_min = warn_threshold_min * 100.0 / average_lap_duration
-	current_caridx = ir['CamCarIdx']
 	current_pct = ir['LapDistPct']
 	current_classspeed = ir['DriverInfo']['Drivers'][current_caridx]['CarClassRelSpeed']
 	for caridx in range(len(ir['DriverInfo']['Drivers']) - 1): # - 1 to avoid beeping for the pace car
-		if caridx != current_caridx: # different driver
-			classspeed = ir['DriverInfo']['Drivers'][caridx]['CarClassRelSpeed']
-			if classspeed > current_classspeed: # upper classes
-				pct = ir['CarIdxLapDistPct'][caridx]
-				if state.pcts.get(caridx,-1) != pct: #ignore still/pitted cars
-					state.pcts[caridx] = pct
-					delta = fastclassbehind_delta(current_pct, pct)
-					if delta > pct_delta_min and delta < pct_delta:
-						print("fast car behind " + driver_brief(ir, caridx) + " delta = " + str(delta) + " me=" + str(current_pct) + " other=" + str(pct))
-						play('fastclassbehind')
-						state.lastplay = current_time
-						return
+		if caridx == current_caridx: # different driver
+			continue
+		if ir['CarIdxTrackSurface'][caridx] != irsdk.TrkLoc.on_track:
+			continue
+		classspeed = ir['DriverInfo']['Drivers'][caridx]['CarClassRelSpeed']
+		if classspeed < current_classspeed: # upper classes
+			continue
+		pct = ir['CarIdxLapDistPct'][caridx]
+		if state.pcts.get(caridx,-1) == pct: #ignore still/pitted cars
+			continue
+		state.pcts[caridx] = pct
+		delta = fastclassbehind_delta(current_pct, pct)
+		if delta > pct_delta_min and delta < pct_delta:
+			print("fast car behind " + driver_brief(ir, caridx) + " delta = " + str(delta) + " me=" + str(current_pct) + " other=" + str(pct))
+			play('fastclassbehind')
+			state.lastplay = current_time
+			return
 
 def main_thread():
 	config = configparser.ConfigParser()
