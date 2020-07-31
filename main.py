@@ -81,7 +81,7 @@ def fastclassbehind_delta(current_pct, pct):
 def fastclassbehind_handler(ir, config, state):
 	warn_repeat_after = float(config['warn_repeat_after'])
 	current_time = time.time()
-	if state.lastplay + warn_repeat_after < current_time:
+	if state.lastplay + warn_repeat_after > current_time:
 		return
 	average_lap_duration = ir['DriverInfo']['DriverCarEstLapTime']
 	warn_threshold = float(config['warn_threshold'])
