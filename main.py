@@ -74,9 +74,12 @@ class FastClassBehindState:
 
 def fastclassbehind_delta(current_pct, pct):
 	delta = current_pct - pct
-	if abs(delta) > 0.5:
-		delta = 1.0 - abs(delta)
+	if delta > 0.5:
+		delta = delta - 1.0
+	elif delta < -0.5:
+		delta = delta + 1.0
 	return delta * 100.0
+	
 
 def fastclassbehind_handler(ir, config, state):
 	warn_repeat_after = float(config['warn_repeat_after'])
@@ -84,7 +87,7 @@ def fastclassbehind_handler(ir, config, state):
 	if state.lastplay + warn_repeat_after > current_time:
 		return
 	current_caridx = ir['CamCarIdx']
-	if ir['IsReplayPlaying'] or ir['CarIdxTrackSurface'][current_caridx] == irsdk.TrkLoc.on_track:
+	if ir['IsReplayPlaying'] or ir['CarIdxTrackSurface'][current_caridx] != irsdk.TrkLoc.on_track:
 		return
 	average_lap_duration = ir['DriverInfo']['DriverCarEstLapTime']
 	warn_threshold = float(config['warn_threshold'])
@@ -99,7 +102,7 @@ def fastclassbehind_handler(ir, config, state):
 		if ir['CarIdxTrackSurface'][caridx] != irsdk.TrkLoc.on_track:
 			continue
 		classspeed = ir['DriverInfo']['Drivers'][caridx]['CarClassRelSpeed']
-		if classspeed < current_classspeed: # upper classes
+		if classspeed <= current_classspeed: # upper classes
 			continue
 		pct = ir['CarIdxLapDistPct'][caridx]
 		if state.pcts.get(caridx,-1) == pct: #ignore still/pitted cars
